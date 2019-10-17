@@ -5,19 +5,13 @@ $max=0;
 $in=fopen("bitmaps.txt","r");
 while(!feof($in)) {
   $line=fgets($in,100);
-  print_r($line);
+  //print_r($line);
+  $cmd=substr($line,0,2);
+  $cnt=substr($line,2);
+  if(is_numeric($cmd) and $cmd!="00"){
+   $data[$cmd]=$cnt;
+  }
 
-
-  list($NULL,$data0)=explode(" ",trim(fgets($in,100)));
-  list($NULL,$data1)=explode(" ",trim(fgets($in,100)));
-  list($NULL,$data2)=explode(" ",trim(fgets($in,100)));
-  list($NULL,$data3)=explode(" ",trim(fgets($in,100)));
-  list($NULL,$data4)=explode(" ",trim(fgets($in,100)));
-  list($NULL,$data5)=explode(" ",trim(fgets($in,100)));
-  list($NULL,$data6)=explode(" ",trim(fgets($in,100)));
-  list($NULL,$data7)=explode(" ",trim(fgets($in,100)));
-
-  $width[$z]=strlen($data0);
   if(strlen($data0)>$max) $max=strlen($data0);
   for($i=0;$i<strlen($data0);$i++){
     $d0=($data0[$i]=='.'?0:1<<3);
@@ -34,6 +28,7 @@ while(!feof($in)) {
     $lower[$z][]=$L;
   }
   $z++;
+
 }
 
 echo "char f_width[$z]={";
