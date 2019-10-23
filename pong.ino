@@ -1,33 +1,30 @@
-#include <avr/pgmspace.h>
 #include "ht1632.h"
 
-#define  P1WIN 0
-#define  P2WIN 1
-#define  PONG  2
-#define  FIVE  3
-#define  FOUR  4
-#define  THREE  5
-#define  TWO    6
-#define  ONE    7
-#define  CLS    8
+#define  WIN 0
+#define  PONG  1
+#define  CLS    2
 /*
  * Set these constants to the values of the pins connected to the SureElectronics Module
  */
-static const byte ht1632_data = 6;     // Data pin (pin 7)
-static const byte ht1632_wrclk = 7;    // Write clock pin (pin 5)
-static const byte ht1632_cs[] = {8,9};       // Chip Select (1, 2, 3, or 4)
+//static const byte ht1632_data = 6;     // Data pin (pin 7)
+//static const byte ht1632_wrclk = 7;    // Write clock pin (pin 5)
+//static const byte ht1632_cs[] = {8,9};       // Chip Select (1, 2, 3, or 4)
+static const byte ht1632_data = 3;     // Data pin (pin 7)
+static const byte ht1632_wrclk = 4;    // Write clock pin (pin 5)
+static const byte ht1632_cs[] = {5,6};       // Chip Select (1, 2, 3, or 4)
 static const byte ht1632_displays = 2; // Number of displays
 
+static const byte p1control = 0; 
+static const byte p2control = 1;
+static const byte button = 2;
+static const byte speaker = 12;
+
+unsigned long prevmillis = 0;
+
 static const byte bitmaps[][128]={
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,8,3,12,6,6,12,3,8,1,0,0,15,15,15,15,0,3,0,6,0,12,0,12,0,6,0,3,15,15,15,15,0,0,0,0,15,15,15,15,0,0,0,0,15,15,15,15,6,0,3,0,1,8,0,12,0,6,0,3,15,15,15,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,15,15,15,0,3,0,6,0,12,0,12,0,6,0,3,15,15,15,15,0,0,0,0,15,15,15,15,0,0,0,0,15,15,15,15,6,0,3,0,1,8,0,12,0,6,0,3,15,15,15,15,0,0,8,1,12,3,6,6,3,12,1,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                    {1,2,3,4,15,0,15,0,13,0,8,0,13,0,8,0,13,0,8,0,15,0,8,0,7,0,0,0,0,0,0,0,7,0,14,0,15,0,15,12,3,12,3,12,3,15,15,7,14,0,0,15,15,15,15,6,0,3,0,1,8,0,12,15,15,15,15,0,0,7,14,15,15,12,3,13,11,13,11,13,15,5,14},
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,10,15,11,13,11,13,11,13,11,13,11,13,15,12,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,8,7,8,13,8,13,8,13,8,15,15,15,15,1,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,2,12,3,12,3,13,11,13,11,13,11,15,15,7,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,3,12,7,12,15,12,11,13,11,13,3,15,3,6,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,3,15,15,15,15,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+                    {12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6},
+                    {0,0,15,15,15,15,12,12,12,12,15,12,7,8,0,0,7,15,15,15,12,0,12,0,15,15,7,15,0,0,15,15,7,15,3,0,1,8,15,15,15,15,0,0,7,15,15,15,12,0,12,0,14,0,6,0,0,0,15,15,15,15,0,0,0,0,15,15,15,15,0,0,0,0,0,0,0,0,0,0,15,14,15,15,0,3,0,3,15,15,15,14,0,0,15,15,15,15,0,0,0,0,15,15,15,15,0,0,15,14,15,15,0,3,3,3,3,15,3,14,0,0,15,11,15,11,0,0},
+                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                 };
 
 
@@ -97,6 +94,8 @@ static void ht1632_sendshadowram ()
 
 void setup ()  // flow chart from page 17 of datasheet
 {
+//  Serial.begin(115200);          
+  pinMode(button,INPUT_PULLUP);
   pinMode(ht1632_wrclk, OUTPUT);
   pinMode(ht1632_data, OUTPUT);
 
@@ -115,7 +114,7 @@ void setup ()  // flow chart from page 17 of datasheet
     for (byte i=0; i<64; i++)
       ht1632_senddata(i, 0,ht1632_cs[j]);  // clear the display!
   }
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(3));
   
 }
 
@@ -154,126 +153,207 @@ void showbitmap(char bitmap){
   ht1632_sendshadowram();
 }
 
-void game()
-{
-  // x & y scaled by 8
-  
-  int X=16*8;
-  int Y=4*8;
-  int Xo=X;
-  int Yo=Y;
-  int XRC=8;
-  int YRC=2;
-  byte p1s=0; //p1 score
-  byte p2s=0; //p2 score
-  byte i;
-  signed char p1b=7;
-  signed char p2b=56;
-  byte bs=2;
-  
-  while(p1s<8 && p2s<8) {
-    X+=XRC;
-    Y=Yo+YRC;
-  
-    if(X>231){X=231; XRC=-XRC; YRC=random(0,16);}
-    if(X<23) {
-       if((p1b>Y-13) & (p1b<Y+13)){
-         X=23;
-         XRC=-XRC;
-         YRC=(Y-p1b)>>1;
-       } else {
-         p2s++;
-         delay(500);
-         Y=32;
-         X=128;
-         XRC=8;
-       }
-    }
-    if(Y>127) {Y=127;  YRC=-YRC;}
-    if(Y<0) {Y=0;    YRC=-YRC;}
-    
-    plot(X>>3,Y>>3,1);
-    if((X>>3!=Xo>>3) | (Y>>3!=Yo>>3)) plot(Xo>>3,Yo>>3,0);
-    Xo=X;
-    Yo=Y;
-
-// plot score 
-//    if(p1s>0) plot(0,p1s-1,1);
-//    if(p2s>0) plot(31,8-p2s,1);
-  
-    if(random(0,2)==1){
-      if(random(0,50)==1) p1s++;
-      if(p1s>8){
-        p1s=0;
-        for(i=0;i<8;i++) {plot(0,i,0);}
-      }
-    } 
-  
-  
-  
-//    for(i=0;i<8;i++) {plot(2,i,0);}
-   //    p1b=analogRead(1)>>6;
-    
-//    if(p1b>Y){
-//      p1b+=bs;
-//    }else{
-//      p1b+=-bs;
-//   }
-
-//    if(p1b<8) {plot(2,0,1);plot(2,1,1);plot(2,2,1);p1b=7;}
-//    else if(p1b>55) {plot(2,5,1);plot(2,6,1);plot(2,7,1);p1b=56;} 
-//    else {plot(2,(p1b>>3)-1,1);plot(2,(p1b>>3),1);plot(2,(p1b>>3)+1,1);}
-  
-//   for(i=0;i<8;i++) {plot(29,i,0);}
-//    if(p2b>Y){
-//      p2b+=bs;
-//    }else{
-//      p2b+=-bs;
-//    }
-              //  p2b=Y;
- //   if(p2b<8) {plot(29,0,1);plot(29,1,1);plot(29,2,1); p2b=7;}
- //   else if(p2b>55) {plot(29,5,1);plot(29,6,1);plot(29,7,1);p2b=56;} 
- //   else {plot(29,(p2b>>3)-1,1);plot(29,(p2b>>3),1);plot(29,(p2b>>3)+1,1);}
-    delay(100);
+void bat(byte x, byte y, byte bs, byte value){
+  for(bs; bs>0; bs--){
+    plot(x,y+bs-1,value);
   }
-
-  if(p1s==8){
-    showbitmap(P1WIN);
-  } else {
-    showbitmap(P2WIN);
-  }
-  delay(1000);
-
 }
-void test(){
-   plot(1,0,1);
-   plot(1,1,1);
-   plot(1,2,1);
-   plot(1,3,1);
-   plot(1,4,1);
-   plot(1,5,1);
-   plot(1,6,1);
-   plot(1,7,1);
-   plot(1,8,1);
-   plot(1,9,1);
-   plot(2,8,1);
+
+
+int game() {
+  // x & y scaled by 8 zodat er interger math gedaan kan worden voor de rc
+  signed int X=16*8; // ball x 
+  signed int Y=8*8;  // ball y 
+  signed int Xo=X;   // ball x previous
+  signed int Yo=Y;   // ball y previos
+  signed int XRC;  // X direction 
+  signed int YRC=0;  // y direction
+  signed int p1b=300;  // player 1 bat position
+  signed int p2b=300; // player 2 bat position
+  signed int p1bo=400;  // player 1 bat old position
+  signed int p2bo=400; // player 2 bat old position
+  unsigned int ballspeed=80; // ball speed
+  byte batsize=5;
+  byte gamecountdown=1;
+  byte countdown=7;
+
+  if(random(2)==1){
+    XRC=8;
+  }else{
+    XRC=-8;
+  }
+  YRC=random(-4,4);
+  
+   while(true) {
+    // pre game beeping
+    if(gamecountdown==1){
+      if((millis()-prevmillis)>150){
+        prevmillis=millis();
+        if(countdown>0){
+          if(countdown%2==1){
+            plot(16,8,1);
+            tone(speaker,1000,10);          
+          } else {
+            plot(16,8,0);
+          }
+          countdown--;
+        }
+      }
+      if(countdown==0){
+        tone(speaker,1400,20);
+//      bat(16,0,16,1); 
+        gamecountdown=0;
+      }
+    } else {
+
+      // ball shizzle
+      if ((millis()-prevmillis)>ballspeed){
+        prevmillis=millis();
+        X+=XRC;
+        Y+=YRC;
+
+        if(X>255){
+          tone(speaker,100,10);
+          return(1);
+        }
+
+        // p1 paddle check 
+        if((X>>3) == 3) {
+          if(((Y>>3)>=(p1b>>3)) & ((Y>>3)<((p1b>>3)+batsize))){
+            tone(speaker,400,5);
+             XRC=-XRC;
+             if(ballspeed>0){
+               ballspeed-=5;
+             }
+             if(YRC>=0){
+               YRC=map(Y-p1b,0,batsize<<3,0,16);
+             } else {
+               YRC=map(Y-p1b,0,batsize<<3,-16,0);
+             }
+          } 
+        }
+ 
+        // p2 paddle check 
+        if((X>>3) == 28) {
+          if(((Y>>3)>=(p2b>>3)) & ((Y>>3)<((p2b>>3)+batsize))){
+            tone(speaker,400,5);
+             XRC=-XRC;
+             if(ballspeed>0){
+               ballspeed-=5;
+            }  
+             if(YRC>=0){
+               YRC=map(Y-p2b,0,batsize<<3,0,16);
+             } else {
+               YRC=map(Y-p2b,0,batsize<<3,-16,0);
+             }
+          } 
+        }
    
+        // p2 scores , reset ball
+        if(X<1){
+          tone(speaker,100,10);
+          return(2);
+        }
+      
+        // bounce onderkant
+        if(Y>127) {
+          tone(speaker,500,1);
+          Y=127;
+          YRC=-YRC;
+        }
+        // bounce bovenkant
+        if(Y<0) {
+          tone(speaker,500,1);
+          Y=0;
+          YRC=-YRC;
+        }
+      
+        // plot bal, en verwijder de oude
+        plot(X>>3,Y>>3,1);
+        if((X>>3!=Xo>>3) | (Y>>3!=Yo>>3)) {
+          plot(Xo>>3,Yo>>3,0);
+          Xo=X;
+          Yo=Y;
+        } 
+      }
+    }
+    // player 1 pad
+    p1b=map(analogRead(p1control)>>1,0,512,0,128-((batsize-1)<<3));
+    if((p1b>>3)!=(p1bo>>3)){
+      bat(2,p1bo>>3,batsize,0);
+      bat(2,p1b>>3,batsize,1);
+      p1bo=p1b;
+    }
+
+    // player 2 pad
+    p2b=map(analogRead(p2control)>>1,0,512,0,128-((batsize-1)<<3));
+//    p2b=0;
+    if((p2b>>3)!=(p2bo>>3)){
+      bat(29,p2bo>>3,batsize,0);
+      bat(29,p2b>>3,batsize,1);
+      p2bo=p2b;
+    }
+  }
+}
+
+void p1winanim(byte loops, int dely ){
+  for (loops ; loops>0 ; loops--){
+    for (byte offset=0;offset<8;offset+=2){
+      for (byte i=0;i<64;i++){
+        ht1632_shadowram[i]=bitmaps[WIN][(i+offset)&63];
+        ht1632_shadowram[i+64]=bitmaps[WIN][64+((i+offset)&63)];
+      }
+      ht1632_sendshadowram();
+      delay(dely);
+    }
+  }
+}
+
+void p2winanim(byte loops, int dely){
+  for (loops ; loops>0 ; loops--){
+    for (byte offset=8;offset>0;offset-=2){
+      for (byte i=0;i<64;i++){
+        ht1632_shadowram[i+64]=bitmaps[WIN][(i+offset)&63];
+        ht1632_shadowram[i]=bitmaps[WIN][64+((i+offset)&63)];
+      }
+      ht1632_sendshadowram();
+      delay(dely);
+    }
+  }
 }
 
 void loop(){
+  byte p1s;
+  byte p2s;
+  p1s=0;
+  p2s=0;
+
   showbitmap(PONG);  
-//  delay(500);
-//  showbitmap(FIVE);  
-//  delay(500);
-//  showbitmap(FOUR);  
-//  delay(500);
-//  showbitmap(THREE);  
-//  delay(500);
-// showbitmap(TWO);  
-//  delay(500);
-//  showbitmap(ONE);  
-//  delay(500);
-//  showbitmap(CLS);
-//  game();
-//   test();
-}
+  while(digitalRead(button)==1){
+    delay(10);
+  }
+
+
+  
+  while(true){
+    showbitmap(CLS);
+    bat(0,0,p1s,1);
+    bat(0,16-p1s,p1s,1);
+    bat(31,0,p2s,1);
+    bat(31,16-p2s,p2s,1);
+   
+    if(game()==1){
+      p1s++;
+    }else{
+      p2s++;
+    }
+    if(p1s==9){
+      p1winanim(10,100);
+      break;
+    }
+    if(p2s==9){
+      p2winanim(10,100);
+      break;
+    }
+  }
+  }

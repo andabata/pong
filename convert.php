@@ -4,60 +4,48 @@ $max=0;
 
 $in=fopen("bitmaps.txt","r");
 while(!feof($in)) {
-  $line=fgets($in,100);
+  $line=trim(fgets($in,100));
   //print_r($line);
   $cmd=substr($line,0,2);
   $cnt=substr($line,2);
+  if($cmd=="--"){
+    $name=$cnt;
+  }
   if(is_numeric($cmd) and $cmd!="00"){
-   $data[$cmd]=$cnt;
+    $data[$cmd]=$cnt;
   }
 
-  if(strlen($data0)>$max) $max=strlen($data0);
-  for($i=0;$i<strlen($data0);$i++){
-    $d0=($data0[$i]=='.'?0:1<<3);
-    $d1=($data1[$i]=='.'?0:1<<2);
-    $d2=($data2[$i]=='.'?0:1<<1);
-    $d3=$data3[$i]=='.'?0:1;
-    $D=$d0+$d1+$d2+$d3;
-    $d0=($data4[$i]=='.'?0:1<<3);
-    $d1=($data5[$i]=='.'?0:1<<2);
-    $d2=($data6[$i]=='.'?0:1<<1);
-    $d3=$data7[$i]=='.'?0:1;
-    $L=$d0+$d1+$d2+$d3;
-    $upper[$z][]=$D;
-    $lower[$z][]=$L;
+  if($cmd=="##"){
+    echo "//$name \n {";
+    for($i=0;$i<32;$i++){
+      $d0=($data["01"][$i]=='.'?0:1<<3);
+      $d1=($data["02"][$i]=='.'?0:1<<2);
+      $d2=($data["03"][$i]=='.'?0:1<<1);
+      $d3=$data["04"][$i]=='.'?0:1;
+      $D=$d0+$d1+$d2+$d3;
+      print("$D,");
+      $d0=($data["05"][$i]=='.'?0:1<<3);
+      $d1=($data["06"][$i]=='.'?0:1<<2);
+      $d2=($data["07"][$i]=='.'?0:1<<1);
+      $d3=$data["08"][$i]=='.'?0:1;
+      $D=$d0+$d1+$d2+$d3;
+      print("$D,");
+    }
+    for($i=0;$i<32;$i++){
+      $d0=($data["09"][$i]=='.'?0:1<<3);
+      $d1=($data["10"][$i]=='.'?0:1<<2);
+      $d2=($data["11"][$i]=='.'?0:1<<1);
+      $d3=$data["12"][$i]=='.'?0:1;
+      $D=$d0+$d1+$d2+$d3;
+      print("$D,");
+      $d0=($data["13"][$i]=='.'?0:1<<3);
+      $d1=($data["14"][$i]=='.'?0:1<<2);
+      $d2=($data["15"][$i]=='.'?0:1<<1);
+      $d3=$data["16"][$i]=='.'?0:1;
+      $D=$d0+$d1+$d2+$d3;
+      print("$D,");
+    }
+    echo "}\n";
   }
-  $z++;
 
 }
-
-echo "char f_width[$z]={";
-for($i=0;$i<$z;$i++) echo $width[$i].",";
-echo "};\n";
-echo "char f_upper[$z][$max]={";
-for($i=0;$i<$z;$i++){
-   echo "{";
-   for($j=0;$j<$max;$j++) {
-     if(isset($upper[$i][$j]))
-      echo $upper[$i][$j].",";
-     else
-     echo "0,";
-   }
-   echo "},";
-}
-echo "};\n";
-echo "char f_lower[$z][$max]={";
-for($i=0;$i<$z;$i++){
-   echo "{";
-   for($j=0;$j<$max;$j++) {
-     if(isset($lower[$i][$j]))
-      echo $lower[$i][$j].",";
-     else
-     echo "0,";
-   }
-   echo "},";
-}
-echo "};\n";
-?>
-
-
