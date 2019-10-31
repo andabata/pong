@@ -206,13 +206,42 @@ int game() {
       // ball shizzle
       if ((millis()-prevmillis)>ballspeed){
         prevmillis=millis();
-//        X+=XRC;
-//        Y+=YRC;
+        X+=XRC;
+        Y+=YRC;
 
+        // p1 scores 
         if(X>255){
           tone(speaker,100,10);
           return(1);
         }
+
+        // p2 scores 
+        if(X<1){
+          tone(speaker,100,10);
+          return(2);
+        }
+  
+        
+        // bounce onderkant
+        if(Y>127) {
+          tone(speaker,500,1);
+          Y=127;
+          YRC=-YRC;
+        }
+        // bounce bovenkant
+        if(Y<0) {
+          tone(speaker,500,1);
+          Y=0;
+          YRC=-YRC;
+        }
+      
+        // plot bal, en verwijder de oude
+        plot(X>>3,Y>>3,1);
+        if((X>>3!=Xo>>3) | (Y>>3!=Yo>>3)) {
+          plot(Xo>>3,Yo>>3,0);
+          Xo=X;
+          Yo=Y;
+        } 
 
         // p1 paddle check 
         if((X>>3) == 3) {
@@ -245,35 +274,6 @@ int game() {
              }
           } 
         }
-   
-        // p2 scores , reset ball
-        if(X<1){
-          tone(speaker,100,10);
-          return(2);
-        }
-      
-        // bounce onderkant
-        if(Y>127) {
-          tone(speaker,500,1);
-          Y=127;
-          YRC=-YRC;
-        }
-        // bounce bovenkant
-        if(Y<0) {
-          tone(speaker,500,1);
-          Y=0;
-          YRC=-YRC;
-        }
-      
-        // plot bal, en verwijder de oude
-        plot(X>>3,Y>>3,1);
-        if((X>>3!=Xo>>3) | (Y>>3!=Yo>>3)) {
-          plot(Xo>>3,Yo>>3,0);
-          Xo=X;
-          Yo=Y;
-        } 
-        X+=XRC;
-        Y+=YRC;
       }
     }
     // player 1 pad
