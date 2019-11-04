@@ -1,4 +1,5 @@
 #include "ht1632.h"
+#include "font.h" 
 
 #define  WIN 0
 #define  PONG  1
@@ -17,6 +18,11 @@ static const byte button = 2;
 static const byte speaker = 12;
 
 unsigned long prevmillis = 0;
+
+byte sbatsize=0;
+byte ssound=1;
+byte sballspeed=80;
+byte sballspeedup=5;
 
 static const byte bitmaps[][128]={
                     {12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6},
@@ -91,7 +97,7 @@ static void ht1632_sendshadowram ()
 
 void setup ()  // flow chart from page 17 of datasheet
 {
-//  Serial.begin(115200);          
+  Serial.begin(115200);          
   pinMode(button,INPUT_PULLUP);
   pinMode(ht1632_wrclk, OUTPUT);
   pinMode(ht1632_data, OUTPUT);
@@ -113,6 +119,9 @@ void setup ()  // flow chart from page 17 of datasheet
   }
   randomSeed(analogRead(3));
   
+  if(digitalRead(button)==0){
+      gamesetup();
+  }
 }
 
 void plot (char x, char y, char val)
@@ -321,6 +330,53 @@ void p2winanim(byte loops, int dely){
   }
 }
 
+void gamesetup(){
+  displaytext("Bat:","daar");
+  delay(2000);
+  displaytext("","beep");
+  delay(2000);
+}
+
+void displaytext(char *upper, char *lower){
+  int i=0;
+  unsigned char lw=0;
+  unsigned char offset=0;
+  unsigned char j=0;
+  unsigned char t=0;
+  unsigned int index;
+ 
+  if(strlen(upper)>0){
+    for(i=0;i<64;i++){
+      ht1632_shadowram[i]=0;
+    } 
+    for(i=0;i<strlen(upper);i++){
+      index=(byte)upper[i]-32;
+      lw=pgm_read_word_near(f_width+index);
+      for(j=0;j<lw;j++){
+        ht1632_shadowram[offset]=pgm_read_word_near(f_upper+index*8+j);
+        ht1632_shadowram[offset+1]=pgm_read_word_near(f_lower+index*8+j);
+        offset+=2;
+      } 
+    }
+  }
+  if(strlen(lower)>0){
+    offset=64;
+    for(i=64;i<128;i++){
+      ht1632_shadowram[i]=0;
+    } 
+    for(i=0;i<strlen(lower);i++){
+      index=(byte)lower[i]-32;
+      lw=pgm_read_word_near(f_width+index);
+      for(j=0;j<lw;j++){
+        ht1632_shadowram[offset]=pgm_read_word_near(f_upper+index*8+j);
+        ht1632_shadowram[offset+1]=pgm_read_word_near(f_lower+index*8+j);
+        offset+=2;
+      } 
+    }
+  }
+  ht1632_sendshadowram();
+}
+
 void loop(){
   byte p1s;
   byte p2s;
@@ -332,8 +388,6 @@ void loop(){
     delay(10);
   }
 
-
-  
   while(true){
     showbitmap(CLS);
     bat(0,0,p1s,1);
