@@ -218,7 +218,6 @@ int game() {
       }
       if(countdown==0){
         sound(1400,20);
-//      bat(16,0,16,1); 
         gamecountdown=0;
       }
     } else {
@@ -265,7 +264,7 @@ int game() {
 
         // p1 paddle check 
         if((X>>3) == 3) {
-          if(((Y>>3)>=(p1b>>3)) & ((Y>>3)<((p1b>>3)+batsize))){
+          if(((Y>>3)>=(p1b>>3)) & ((Y>>3)<=((p1b>>3)+batsize))){
             sound(400,5);
              XRC=-XRC;
              if(ballspeed>0){
@@ -281,7 +280,7 @@ int game() {
  
         // p2 paddle check 
         if((X>>3) == 28) {
-          if(((Y>>3)>=(p2b>>3)) & ((Y>>3)<((p2b>>3)+batsize))){
+          if(((Y>>3)>=(p2b>>3)) & ((Y>>3)<=((p2b>>3)+batsize))){
             sound(400,5);
              XRC=-XRC;
              if(ballspeed>0){
