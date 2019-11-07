@@ -1,3 +1,4 @@
+#include <EEPROM.h>
 #include "ht1632.h"
 #include "font.h" 
 
@@ -19,12 +20,12 @@ static const byte speaker = 12;
 
 unsigned long prevmillis = 0;
 
-byte sbatsize=0;
+byte sbatsize=5;
 byte ssound=1;
 byte sballspeed=80;
 byte sballspeedup=5;
 
-static const byte bitmaps[][128]={
+static const byte bitmaps[][128] ={
                     {12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,12,12,9,9,3,3,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6,3,3,9,9,12,12,6,6},
                     {0,0,15,15,15,15,13,8,13,8,15,8,7,0,0,0,7,14,15,15,12,3,12,3,15,15,7,14,0,0,15,15,7,15,3,0,1,8,15,15,15,15,0,0,7,15,15,15,12,3,13,11,13,15,13,14,0,0,15,11,15,11,0,0,0,0,13,15,13,15,0,0,7,11,15,11,13,11,12,3,15,15,7,14,0,0,15,15,15,15,1,8,0,12,15,14,15,15,0,0,7,14,15,15,12,3,12,3,15,15,7,14,0,0,0,14,1,15,1,11,1,11,15,15,15,15,0,0},
                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -97,7 +98,7 @@ static void ht1632_sendshadowram ()
 
 void setup ()  // flow chart from page 17 of datasheet
 {
-  Serial.begin(115200);          
+  Serial.begin(115200);
   pinMode(button,INPUT_PULLUP);
   pinMode(ht1632_wrclk, OUTPUT);
   pinMode(ht1632_data, OUTPUT);
@@ -111,9 +112,9 @@ void setup ()  // flow chart from page 17 of datasheet
     ht1632_sendcmd(HT1632_CMD_SYSON,ht1632_cs[j]); 	/* System on */
     ht1632_sendcmd(HT1632_CMD_LEDON,ht1632_cs[j]); 	/* LEDs on */
     ht1632_sendcmd(HT1632_CMD_PWM | 15 ,ht1632_cs[j]); /* pwm off */
-    for (byte i=0; i<64; i++)
-      ht1632_senddata(i, 15,ht1632_cs[j]);  // clear the display!
-    delay(100);
+//    for (byte i=0; i<64; i++)
+//      ht1632_senddata(i, 15,ht1632_cs[j]);  // clear the display!
+//    delay(10000);
     for (byte i=0; i<64; i++)
       ht1632_senddata(i, 0,ht1632_cs[j]);  // clear the display!
   }
@@ -178,8 +179,8 @@ int game() {
   signed int p2b=300; // player 2 bat position
   signed int p1bo=400;  // player 1 bat old position
   signed int p2bo=400; // player 2 bat old position
-  unsigned int ballspeed=80; // ball speed
-  byte batsize=5;
+  unsigned int ballspeed=(20-sballspeed)*10; // ball speed
+  byte batsize=sbatsize;
   byte gamecountdown=1;
   byte countdown=7;
 
@@ -331,10 +332,70 @@ void p2winanim(byte loops, int dely){
 }
 
 void gamesetup(){
-  displaytext("Bat:","daar");
+  char buffer[6];
+  byte input;
+  
+  displaytext("Setup","");
+
   delay(2000);
-  displaytext("","beep");
-  delay(2000);
+  displaytext("Bat:","");
+  while(digitalRead(button)==1){
+    input=map(analogRead(p2control)>>1,0,512,1,16);
+    snprintf(buffer,6,"%i",input);
+    displaytext("",buffer);
+  }
+  sbatsize=input;
+  
+  delay(500);
+  displaytext("Sound","");
+  while(digitalRead(button)==1){
+    input=map(analogRead(p2control)>>1,0,512,0,2);
+    if(input==0){
+      snprintf(buffer,6,"off");
+    } else {
+      snprintf(buffer,6,"on");
+    }
+    displaytext("",buffer);
+  }
+  ssound=input;
+  
+  delay(500);
+  displaytext("Speed:","");
+  while(digitalRead(button)==1){
+    input=map(analogRead(p2control)>>1,0,512,20,1);
+    snprintf(buffer,6,"%i",input);
+    displaytext("",buffer);
+  }
+  sballspeed=input;
+
+  delay(500);
+  displaytext("Spdup:","");
+  while(digitalRead(button)==1){
+    input=map(analogRead(p2control)>>1,0,512,0,21);
+    snprintf(buffer,6,"%i",input);
+    displaytext("",buffer);
+  }
+  sballspeedup=input;
+
+  delay(500);
+  displaytext("Save","");
+  while(digitalRead(button)==1){
+    input=map(analogRead(p2control)>>1,0,512,0,2);
+    if(input==0){
+      snprintf(buffer,6,"no");
+    } else {
+      snprintf(buffer,6,"yes");
+    }
+    displaytext("",buffer);
+  }
+  if(input==1){
+    displaytext("Saving","Data");
+    EEPROM.write(0,sbatsize);
+    EEPROM.write(1,ssound);
+    EEPROM.write(2,sballspeed);
+    EEPROM.write(3,sballspeedup);
+    delay(500);
+  }
 }
 
 void displaytext(char *upper, char *lower){
