@@ -119,9 +119,19 @@ void setup ()  // flow chart from page 17 of datasheet
       ht1632_senddata(i, 0,ht1632_cs[j]);  // clear the display!
   }
   randomSeed(analogRead(3));
+  sbatsize=EEPROM.read(0);
+  ssound=EEPROM.read(1);
+  sballspeed=EEPROM.read(2);
+  sballspeedup=EEPROM.read(3);
   
   if(digitalRead(button)==0){
       gamesetup();
+  }
+}
+
+void sound(int freq, int duration){
+  if (ssound==1){
+    tone(speaker,freq,duration);
   }
 }
 
@@ -199,7 +209,7 @@ int game() {
         if(countdown>0){
           if(countdown%2==1){
             plot(16,8,1);
-            tone(speaker,1000,10);          
+            sound(1000,10);          
           } else {
             plot(16,8,0);
           }
@@ -207,7 +217,7 @@ int game() {
         }
       }
       if(countdown==0){
-        tone(speaker,1400,20);
+        sound(1400,20);
 //      bat(16,0,16,1); 
         gamecountdown=0;
       }
@@ -221,26 +231,26 @@ int game() {
 
         // p1 scores 
         if(X>255){
-          tone(speaker,100,10);
+          sound(100,10);
           return(1);
         }
 
         // p2 scores 
         if(X<1){
-          tone(speaker,100,10);
+          sound(100,10);
           return(2);
         }
   
         
         // bounce onderkant
         if(Y>127) {
-          tone(speaker,500,1);
+          sound(500,1);
           Y=127;
           YRC=-YRC;
         }
         // bounce bovenkant
         if(Y<0) {
-          tone(speaker,500,1);
+          sound(500,1);
           Y=0;
           YRC=-YRC;
         }
@@ -256,10 +266,10 @@ int game() {
         // p1 paddle check 
         if((X>>3) == 3) {
           if(((Y>>3)>=(p1b>>3)) & ((Y>>3)<((p1b>>3)+batsize))){
-            tone(speaker,400,5);
+            sound(400,5);
              XRC=-XRC;
              if(ballspeed>0){
-               ballspeed-=5;
+               ballspeed-=sballspeedup;
              }
              if(YRC>=0){
                YRC=map(Y-p1b,0,batsize<<3,0,16);
@@ -272,10 +282,10 @@ int game() {
         // p2 paddle check 
         if((X>>3) == 28) {
           if(((Y>>3)>=(p2b>>3)) & ((Y>>3)<((p2b>>3)+batsize))){
-            tone(speaker,400,5);
+            sound(400,5);
              XRC=-XRC;
              if(ballspeed>0){
-               ballspeed-=5;
+               ballspeed-=sballspeedup;
             }  
              if(YRC>=0){
                YRC=map(Y-p2b,0,batsize<<3,0,16);
