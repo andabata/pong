@@ -271,9 +271,9 @@ int game() {
                ballspeed-=sballspeedup;
              }
              if(YRC>=0){
-               YRC=map(Y-p1b,0,batsize<<3,0,16);
+               YRC=map(Y-p1b,0,batsize<<3,0,16)+random(-1,2);
              } else {
-               YRC=map(Y-p1b,0,batsize<<3,-16,0);
+               YRC=map(Y-p1b,0,batsize<<3,-16,0)+random(-1,2);
              }
           } 
         }
@@ -287,9 +287,9 @@ int game() {
                ballspeed-=sballspeedup;
             }  
              if(YRC>=0){
-               YRC=map(Y-p2b,0,batsize<<3,0,16);
+               YRC=map(Y-p2b,0,batsize<<3,0,16)+random(-1,2);
              } else {
-               YRC=map(Y-p2b,0,batsize<<3,-16,0);
+               YRC=map(Y-p2b,0,batsize<<3,-16,0)+random(-1,2);
              }
           } 
         }
